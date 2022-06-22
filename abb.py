@@ -21,7 +21,6 @@ import logging
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 
-
 class Robot:
     def __init__(self,
                  ip='192.168.125.1',
@@ -302,6 +301,12 @@ class Robot:
         return
         # return self.send(msg)
 
+    #dodato
+    def is_reachable(self, pose):
+        msg = "100 " + self.format_pose(pose)
+        response = self.send(msg)
+        return response
+
     def send(self, message, wait_for_response=True):
         '''
         Send a formatted message to the robot socket.
@@ -314,6 +319,11 @@ class Robot:
         if not wait_for_response: return
         data = self.sock.recv(4096)
         log.debug('%-14s recieved: %s', caller, data)
+        #print(data)
+        if data.__contains__('TRUE'.encode()):
+            data = 'true'
+        elif data.__contains__('FALSE'.encode()):
+            data = 'false'
         return data
 
     def format_pose(self, pose):

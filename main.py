@@ -36,7 +36,7 @@ def init_robots(config: json):
 
 def single_fitness(solution):
     if len(solution) <= Config.n_targets//2 - 1:
-        return 100000
+        return 0
     distance = DIST_MAP[solution[0], solution[-1]]
 
     for idx1, idx2 in zip(solution[:-1], solution[1:]):
@@ -58,7 +58,6 @@ def fitness(solution, solution_idx):
     totalDistance += single_fitness(targets[prevIndx:])
 
     return -totalDistance
-
 
 def ocx(p1, p2, size):
     """ Ordered cycle crossover"""
@@ -166,70 +165,113 @@ def main():
     # xyzArray = [[-250.727, 32.339, 0], [-181.167, 31.793, 0], [-98.8, 42.013, 0], [-48.862, 82.15, 0],
     #             [-143.755, 108.275, 0], [-196.308, 153.932, 0], [-73.859, 154.937, 0], [-51.74, 231.333, 0],
     #             [-88.312, 277.863, 0], [-137.331, 280.576, 0], [-206.624, 267.382, 0], [-256.583, 213.549, 0]]
-    #xyzArray = [[250, -670, 10], [400, -200, 350], [500, -100, 350], [400, 0, 350], [500, 100, 350], [400, 200, 350], [450, 300, 350]]
     quat = Quaternion(axis=[0, 1, 0], degrees=180)
     targetArray = []
     #dodajemo prvih 6 targeta (targeti za 1. robota), zatim 2. 6 targeta (za 2. robota)
-    for x in range(6):
+    for x in range(best_sol[0]):
         #dodajemo svaki target u niz targeta
         #targetArray.append([xyzArray[x], quat.q])
         targetArray.append([targetsRobot1[x], quat.q])
 
-    for x in range(6):
+    for x in range(Config.n_targets-best_sol[0]):
         #dodajemo svaki target u niz targeta
         targetArray.append([targetsRobot2[x], quat.q])
 
+    print("PRINT")
+
     for x in range(12):
-        if x <= 5:
+        #prvih n (meta podatak) targeta postvljamo 1. robotu
+        if x <= best_sol[0]-1:
+            print(targetArray[x])
             robots['ROB1'].set_cartesian(targetArray[x])
         else:
             robots['ROB2'].set_cartesian(targetArray[x])
 
+def check():
+    file = open("config.json")
+    config_json = json.load(file)
+    robots = init_robots(config_json)
+
+    quat = Quaternion(axis=[0, 1, 0], degrees=180)
+    checkArray = []
+    #za svih 12 targeta, provericemo da li roboti mogu da ih dohvate
+    #ukoliko ni jedan ne moze, izbacujemo ih iz optimizacije
+    for x in range(Config.n_targets):
+        print(TARGET_LIST[x])
+        checkArray.append([TARGET_LIST[x], quat.q])
+
+    #targets for removing - u listi ce biti indeksi targeta koji neki od robota ne moze da dohvati
+    remove = []
+
+    for x in range(Config.n_targets):
+        #print(checkArray[x])
+        #robots['ROB1'].set_cartesian(checkArray[x])
+        isReachable = robots['ROB2'].is_reachable(checkArray[x])
+        if isReachable == 'false':
+            #print('Target not reachable')
+            remove.append(x)
+
+    for y in range(len(checkArray)):
+        #print(checkArray[y])
+        #robots['ROB1'].set_cartesian(checkArray[x])
+        isReachable2 = robots['ROB1'].is_reachable(checkArray[y])
+        if isReachable2 == 'false':
+            #print('Target not reachable')
+            remove.append(y)
+            #checkArray.remove(checkArray[y])
+
+    for i in range(len(remove)-1):
+        if remove[i+1] == remove[i]:
+            print('Target nije dohvatljiv za oba robota:', checkArray[i][0])
+            checkArray.remove(checkArray[i])
+
 if __name__ == '__main__':
-    ga_instance = pygad.GA(
-        num_generations=1000,
-        initial_population=POPULATION,
-        gene_type=int,
+    check()
 
-        mutation_type=mutate,
-        mutation_probability=0.2,
-
-        # parent_selection_type="sss",
-        num_parents_mating=Config.parents_mating,
-        keep_parents=20,
-
-        fitness_func=fitness,
-        crossover_type=crossover
-    )
-    start = time.time()
-    ga_instance.run()
-    end = time.time()
-    best_sol, best_sol_fitness, best_sol_idx = ga_instance.best_solution()
-
-    #najbolje resenje
-    #print(best_sol)
-    #meta podatak
-    #print(best_sol[0])
-    #print(TARGET_LIST)
-    #targeti koje izvrsava 1. robot
-    #print(best_sol[1:best_sol[0]+1])
-    #targeti koje izvrsava 2. robot
-    #print(best_sol[best_sol[0]+1:])
-    targetsRobot1 = []
-    targetsRobot2 = []
-
-    for i in range(1, best_sol[0]+1):
-        targetsRobot1.append(TARGET_LIST[best_sol[i]])
-
-    for i in range(best_sol[0]+1, len(best_sol)):
-        targetsRobot2.append(TARGET_LIST[best_sol[i]])
-
-    print(targetsRobot1)
-    print(targetsRobot2)
-    main()
-
-    print(f"Time: {end - start:.5f}")
-    complete_plot(best_sol)
-    ga_instance.plot_fitness()
+    # ga_instance = pygad.GA(
+    #     num_generations=1000,
+    #     initial_population=POPULATION,
+    #     gene_type=int,
+    #
+    #     mutation_type=mutate,
+    #     mutation_probability=0.2,
+    #
+    #     #parent_selection_type="sss",
+    #     num_parents_mating=Config.parents_mating,
+    #     keep_parents=20,
+    #
+    #     fitness_func=fitness,
+    #     crossover_type=crossover
+    # )
+    # start = time.time()
+    # ga_instance.run()
+    # end = time.time()
+    # best_sol, best_sol_fitness, best_sol_idx = ga_instance.best_solution()
+    #
+    # #najbolje resenje
+    # #print(best_sol)
+    # #meta podatak
+    # #print(best_sol[0])
+    # #print(TARGET_LIST)
+    # #targeti koje izvrsava 1. robot
+    # #print(best_sol[1:best_sol[0]+1])
+    # #targeti koje izvrsava 2. robot
+    # #print(best_sol[best_sol[0]+1:])
+    # targetsRobot1 = []
+    # targetsRobot2 = []
+    #
+    # for i in range(1, best_sol[0]+1):
+    #     targetsRobot1.append(TARGET_LIST[best_sol[i]])
+    #
+    # for i in range(best_sol[0]+1, len(best_sol)):
+    #     targetsRobot2.append(TARGET_LIST[best_sol[i]])
+    #
+    # print(targetsRobot1)
+    # print(targetsRobot2)
+    # main()
+    #
+    # print(f"Time: {end - start:.5f}")
+    # complete_plot(best_sol)
+    # ga_instance.plot_fitness()
 
 
