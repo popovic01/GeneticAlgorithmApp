@@ -28,6 +28,8 @@ TARGET_LIST = [
     )
 ]
 
+VALID_TARGETS = []
+
 TARGET_LIST_COPY = []
 for x in range(len(TARGET_LIST)):
     TARGET_LIST_COPY.append(TARGET_LIST[x].copy())
