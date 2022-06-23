@@ -35,10 +35,16 @@ def init_robots(config: json):
     return rob_dict
 
 def single_fitness(solution):
-    if len(solution) <= Config.n_targets//2 - 1:
+    #promeniti ovo - moze neki robot i da nema targete
+    if len(solution) == 0:
         return 0
-    distance = DIST_MAP[solution[0], solution[-1]]
 
+    distance = DIST_MAP[solution[0], solution[-1]] #solution[-1] je poslednji element niza
+    #racunanje distance izmedju prvog i poslednjeg targeta iz prosledjene liste, pomocu matrice DIST_MAP
+    #npr. ako je lista [4,0,9,1] onda se racuna udaljenost od 4 do 1 (potrebno za zatvaranje trajektorije)
+
+    #racunanje distance izmedju svaka dva targeta i dodavanje na distancu
+    #distance od 4 do 0, od 0 do 9, od 9 do 1
     for idx1, idx2 in zip(solution[:-1], solution[1:]):
         distance += DIST_MAP[idx1, idx2]
 
@@ -46,18 +52,27 @@ def single_fitness(solution):
 
 def fitness(solution, solution_idx):
     totalDistance = 0
-    info = solution[0:Config.n_robots - 1]  # dobijamo listu elemenata
-    targets = solution[Config.n_robots - 1:]
+    info = solution[0:Config.n_robots - 1]  #dobijamo listu elemenata - u nasem slucaju samo 1 element
+    targets = solution[Config.n_robots - 1:] #lista targeta - brojevi od 0 do 11 (ako su svi targeti dohvatljivi)
 
     prevIndx = 0
     for i in info:
-        subTargets = targets[prevIndx:i]
-        totalDistance += single_fitness(subTargets)
+        #subTargets = targets[prevIndx:i]
+        subTargets = [12]
+        #subTargets.append(targets[prevIndx:i]) #targeti za i-tog robota (u nasem slucaju od 0 do info[0])
+        for x in range(len(targets[prevIndx:i])):
+            subTargets.append(targets[x])
+        subTargets.append(12)
+        totalDistance += single_fitness(subTargets) #racunanje single fitnesa za targete za prvog robota
         prevIndx = i
 
-    totalDistance += single_fitness(targets[prevIndx:])
-
-    return -totalDistance
+    subTargets2 = [13]
+    for x in range(prevIndx, len(targets)):
+        subTargets2.append(targets[x])
+    subTargets2.append(13)
+    totalDistance += single_fitness(subTargets2) #racunanje single fitnesa za targete za drugog robota
+    #total distance je zbir pojedinacnih fitnesa svakog robota
+    return -totalDistance #sto je distanca manja, fitnes je veci (zato ide minus)
 
 def ocx(p1, p2, size):
     """ Ordered cycle crossover"""
@@ -132,13 +147,14 @@ def plot(solution):
         x2, y2 = t2
         plt.plot([x1, x2], [y1, y2])
 
-    start_idx = solution[0]
-    end_idx = solution[-1]
-    t1 = TARGET_LIST2[start_idx]
-    t2 = TARGET_LIST2[end_idx]
-    x1, y1 = t1
-    x2, y2 = t2
-    plt.plot([x1, x2], [y1, y2])
+    if len(solution) > 0:
+        start_idx = solution[0]
+        end_idx = solution[-1]
+        t1 = TARGET_LIST2[start_idx]
+        t2 = TARGET_LIST2[end_idx]
+        x1, y1 = t1
+        x2, y2 = t2
+        plt.plot([x1, x2], [y1, y2])
 
     #plt.show()
 
@@ -167,6 +183,10 @@ def main():
     #             [-88.312, 277.863, 0], [-137.331, 280.576, 0], [-206.624, 267.382, 0], [-256.583, 213.549, 0]]
     quat = Quaternion(axis=[0, 1, 0], degrees=180)
     targetArray = []
+    homeTargets = []
+    for x in range(len(HOME_POSITION)):
+        homeTargets.append([HOME_POSITION[x], quat.q])
+
     #dodajemo prvih 6 targeta (targeti za 1. robota), zatim 2. 6 targeta (za 2. robota)
     for x in range(best_sol[0]):
         #dodajemo svaki target u niz targeta
@@ -185,11 +205,13 @@ def main():
             robots['ROB1'].set_cartesian(targetArray[x])
             #da bi se 1. robot vratio u svoju pocetnu tacku
             robots['ROB1'].set_cartesian(targetArray[0])
+            robots['ROB1'].set_cartesian(homeTargets[0])
         else:
             robots['ROB2'].set_cartesian(targetArray[x])
 
     #da bi se 2. robot vratio u svoju pocetnu tacku
     robots['ROB2'].set_cartesian(targetArray[best_sol[0]])
+    robots['ROB2'].set_cartesian(homeTargets[1])
 
 def check():
     file = open("config.json")
@@ -218,21 +240,22 @@ def check():
             print('Target nije dohvatljiv za prvog robota:', VALID_TARGETS[y][0])
             remove.append(y)
 
-    for i in range(len(remove)-1):
-        if remove[i+1] == remove[i]:
-            print('Target nije dohvatljiv za oba robota:', VALID_TARGETS[i][0])
+    for i in range(len(remove)):
+            print('Target se izbacuje iz optimizacije:', VALID_TARGETS[i][0])
             VALID_TARGETS.remove(VALID_TARGETS[i])
             TARGET_LIST.remove(TARGET_LIST[i])
+            TARGET_LIST2.remove(TARGET_LIST2[i])
 
     #update broja targeta
     Config.n_targets = len(VALID_TARGETS)
     print('Broj dohvatljivih targeta:', Config.n_targets)
+    createPopulation()
 
 if __name__ == '__main__':
     check()
 
     ga_instance = pygad.GA(
-        num_generations=1000,
+        num_generations=100,
         initial_population=POPULATION,
         gene_type=int,
 
@@ -269,8 +292,8 @@ if __name__ == '__main__':
     for i in range(best_sol[0]+1, len(best_sol)):
         targetsRobot2.append(TARGET_LIST[best_sol[i]])
 
-    print(targetsRobot1)
-    print(targetsRobot2)
+    #print(targetsRobot1)
+    #print(targetsRobot2)
     main()
 
     print(f"Time: {end - start:.5f}")

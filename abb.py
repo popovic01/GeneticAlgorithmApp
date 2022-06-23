@@ -301,7 +301,7 @@ class Robot:
         return
         # return self.send(msg)
 
-    #dodato
+    #dodata metoda - za proveru dohvatljivosti targeta
     def is_reachable(self, pose):
         msg = "100 " + self.format_pose(pose)
         response = self.send(msg)
