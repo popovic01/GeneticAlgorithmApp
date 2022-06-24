@@ -2,7 +2,7 @@ import numpy as np
 import random
 from scipy.spatial.distance import cdist
 
-seed = 999
+seed = 888
 np.random.seed(seed)
 random.seed(seed)
 

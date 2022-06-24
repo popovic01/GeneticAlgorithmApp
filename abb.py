@@ -307,6 +307,12 @@ class Robot:
         response = self.send(msg)
         return response
 
+    #dodata metoda - za proveru kolizije
+    def collision(self, pose):
+        msg = "44 " + self.format_pose(pose)
+        response = self.send(msg)
+        return response
+
     def send(self, message, wait_for_response=True):
         '''
         Send a formatted message to the robot socket.
@@ -319,11 +325,14 @@ class Robot:
         if not wait_for_response: return
         data = self.sock.recv(4096)
         log.debug('%-14s recieved: %s', caller, data)
-        #print(data)
         if data.__contains__('TRUE'.encode()):
             data = 'true'
         elif data.__contains__('FALSE'.encode()):
             data = 'false'
+        elif data.__contains__('COLLISION'.encode()):
+            data = 'collision'
+        elif data.__contains__('NO TOUCH'.encode()):
+            data = 'no collision'
         return data
 
     def format_pose(self, pose):

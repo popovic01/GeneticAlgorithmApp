@@ -35,10 +35,8 @@ def init_robots(config: json):
     return rob_dict
 
 def single_fitness(solution):
-    #promeniti ovo - moze neki robot i da nema targete
     if len(solution) == 0:
         return 0
-
     distance = DIST_MAP[solution[0], solution[-1]] #solution[-1] je poslednji element niza
     #racunanje distance izmedju prvog i poslednjeg targeta iz prosledjene liste, pomocu matrice DIST_MAP
     #npr. ako je lista [4,0,9,1] onda se racuna udaljenost od 4 do 1 (potrebno za zatvaranje trajektorije)
@@ -184,13 +182,13 @@ def main():
     quat = Quaternion(axis=[0, 1, 0], degrees=180)
     targetArray = []
     homeTargets = []
+
     for x in range(len(HOME_POSITION)):
         homeTargets.append([HOME_POSITION[x], quat.q])
 
-    #dodajemo prvih 6 targeta (targeti za 1. robota), zatim 2. 6 targeta (za 2. robota)
+    #dodajemo prvih n targeta (targeti za 1. robota), zatim m 6 targeta (za 2. robota)
     for x in range(best_sol[0]):
         #dodajemo svaki target u niz targeta
-        #targetArray.append([xyzArray[x], quat.q])
         targetArray.append([targetsRobot1[x], quat.q])
 
     for x in range(Config.n_targets-best_sol[0]):
@@ -212,6 +210,13 @@ def main():
     #da bi se 2. robot vratio u svoju pocetnu tacku
     robots['ROB2'].set_cartesian(targetArray[best_sol[0]])
     robots['ROB2'].set_cartesian(homeTargets[1])
+
+    #provera da li je doslo do kolizije
+    collision = robots['ROB2'].collision(homeTargets[1]) #vraca collision ili no collision
+    if collision == 'collision':
+        print('Došlo je do kolizije između robota')
+    elif collision == 'no collision':
+        print('Nije došlo do kolizije između robota')
 
 def check():
     file = open("config.json")
