@@ -172,6 +172,7 @@ class Robot:
         msg += format(speed[1], "+08.2f") + " "
         msg += format(speed[2], "+08.1f") + " "
         msg += format(speed[3], "+08.2f") + " #"
+        self.speed = speed
         self.send(msg)
 
     def set_zone(self,
