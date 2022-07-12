@@ -9,7 +9,7 @@ import pygad
 from collections import deque
 import numpy as np
 import matplotlib.pyplot as plt
-
+#ne treba
 speed = [] #brzine robota
 
 def init_robots(config: json):
@@ -21,7 +21,7 @@ def init_robots(config: json):
         port = robot["port"]
         toolData = robot["tool_data"]
         wobj = robot["wobjSto"]
-        speed = robot["speed"]
+        speed = robot["speed"] #ne treba
 
         #kreiranje robota klase Robot
         newRobot = abb.Robot(
@@ -33,7 +33,7 @@ def init_robots(config: json):
         #setovanje tool-a, wobj-a i brzine
         newRobot.set_tool(toolData)
         newRobot.set_workobject(wobj)
-        newRobot.set_speed(speed)
+        newRobot.set_speed(speed) #ne treba
 
         rob_dict[name] = newRobot
 
@@ -51,34 +51,36 @@ def single_fitness(solution):
     for idx1, idx2 in zip(solution[:-1], solution[1:]):
         distance += DIST_MAP[idx1, idx2]
 
-    if solution[0] == 12: #u pitanju je 1. robot
-        time = distance / speed[0] #t=s/v
-    elif solution[0] == 13:  #u pitanju je 2. robot
-        time = distance / speed[1] #t=s/v
+    #if solution[0] == 12: #u pitanju je 1. robot
+       # time = distance / speed[0] #t=s/v
+    #elif solution[0] == 13:  #u pitanju je 2. robot
+        #time = distance / speed[1] #t=s/v
 
-    return time
+    return distance
 
 def fitness(solution, solution_idx):
-    totalTime = 0
+    totalDistance = 0
     info = solution[0:Config.n_robots - 1]  #dobijamo listu elemenata - u nasem slucaju samo 1 element
     targets = solution[Config.n_robots - 1:] #lista targeta - brojevi od 0 do 11 (ako su svi targeti dohvatljivi)
 
     prevIndx = 0
     for i in info:
-        subTargets = [12]
+        #subTargets = [12]
+        subTargets = []
         for x in range(len(targets[prevIndx:i])):
             subTargets.append(targets[x])
-        subTargets.append(12)
-        totalTime += single_fitness(subTargets) #racunanje single fitnesa za targete za prvog robota
+        #subTargets.append(12)
+        totalDistance += single_fitness(subTargets) #racunanje single fitnesa za targete za prvog robota
         prevIndx = i
 
-    subTargets2 = [13]
+    #subTargets2 = [13]
+    subTargets2 = []
     for x in range(prevIndx, len(targets)):
         subTargets2.append(targets[x])
-    subTargets2.append(13)
-    totalTime += single_fitness(subTargets2) #racunanje single fitnesa za targete za drugog robota
+    #subTargets2.append(13)
+    totalDistance += single_fitness(subTargets2) #racunanje single fitnesa za targete za drugog robota
     #total distance je zbir pojedinacnih fitnesa svakog robota
-    return -totalTime #sto je vreme krace, fitnes je veci (zato ide minus)
+    return -totalDistance #sto je distanca kraca, fitnes je veci (zato ide minus)
 
 def ocx(p1, p2, size):
     """ Ordered cycle crossover"""
@@ -184,8 +186,10 @@ def main():
 
     quat = Quaternion(axis=[0, 1, 0], degrees=180)
     targetArray = [] #lista targeta
+    #ne treba
     homeTargets = [] #lista home pozicija
 
+    # ne treba
     for x in range(len(HOME_POSITION)):
         homeTargets.append([HOME_POSITION[x], quat.q])
 
@@ -202,6 +206,7 @@ def main():
     t.start()
     secondRobExecute(robots, targetArray, homeTargets)
 
+    # ne treba
     #provera da li je doslo do kolizije
     collision = robots['ROB2'].collision(homeTargets[1]) #vraca collision ili no collision
     collisionBool = False
@@ -223,7 +228,7 @@ def firstRobExecute(robots, targetArray, homeTargets):
             robots['ROB1'].set_cartesian(targetArray[x])
             #da bi se 1. robot vratio u svoju pocetnu tacku
             robots['ROB1'].set_cartesian(targetArray[0])
-            robots['ROB1'].set_cartesian(homeTargets[0])
+            #robots['ROB1'].set_cartesian(homeTargets[0])
             break
 
 def secondRobExecute(robots, targetArray, homeTargets):
@@ -233,7 +238,7 @@ def secondRobExecute(robots, targetArray, homeTargets):
 
     #da bi se 2. robot vratio u svoju pocetnu tacku
     robots['ROB2'].set_cartesian(targetArray[best_sol[0]])
-    robots['ROB2'].set_cartesian(homeTargets[1])
+    #robots['ROB2'].set_cartesian(homeTargets[1])
 
 def check():
     file = open("config.json")
@@ -273,6 +278,7 @@ def check():
     print('Broj dohvatljivih targeta:', Config.n_targets)
     createPopulation()
 
+    #ne treba
     speed.append(robots['ROB1'].speed[0]) #brzina 1. robota
     speed.append(robots['ROB2'].speed[0]) #brzina 2. robota
     #print(speed)
@@ -320,12 +326,14 @@ if __name__ == '__main__':
 
     #print(targetsRobot1)
     #print(targetsRobot2)
-    collisionBool = main()
+    #collisionBool = main()
+    main()
 
     print(f"Vreme izvršavanja genetskog algoritma: {end - start:.5f}")
     complete_plot(best_sol)
     ga_instance.plot_fitness()
 
+    #ne treba
     if collisionBool == True:
         last_generation = [] #jedinke poslednje generacije
         x = Config.pop_size * Config.num_generations
@@ -333,7 +341,7 @@ if __name__ == '__main__':
         for i in range(x, y):
             last_generation.append(ga_instance.solutions[i])
         fitnessList = list()  #fitnesi za poslednju generaciju
-
+    #ne treba
     while(collisionBool == True):
         fitnessList.clear()
         for i in range(len(last_generation)):

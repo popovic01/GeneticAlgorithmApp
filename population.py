@@ -2,7 +2,8 @@ import numpy as np
 import random
 from scipy.spatial.distance import cdist
 
-seed = 888
+seed = 999
+#seed = 888 #kolizija
 #seed = 12345 #nedohvatljiva tacka
 np.random.seed(seed)
 random.seed(seed)
@@ -31,9 +32,10 @@ TARGET_LIST = [
         [0]*Config.n_targets
     )
 ]
-
+#ne treba
 HOME_POSITION = [[6.292, -390, 569.5], [6.292, 690, 569.5]] #home pozicije za oba robota, u odnosu na wobj sto
 
+#ne treba
 ARRAY = [] #niz za targete i home pozicije, treba nam za matricu
 for x in range(len(TARGET_LIST)):
     ARRAY.append(TARGET_LIST[x])
@@ -66,6 +68,7 @@ def createPopulation():
         newChromosome.extend(metaInfo)
         newChromosome.extend(target_list)
         POPULATION.append(newChromosome) #dodavanje u populaciju
+        #[3,1,4,5,8,9,11,0,10,7,2,6,3]
 
 
 
